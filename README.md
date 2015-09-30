@@ -9,7 +9,7 @@ Use
 ----
 
 ```
-slack-age-collector
+SLACK_TOKEN=token slack-age-collector
 ```
 
 Will print a list of channel id, name, and days old.
