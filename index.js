@@ -14,6 +14,8 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
   })).then(fetch).then(function(res) {
   return res.json();
 }).then(function(body) {
+  if (!body.ok)
+    throw new Error(body.error);
   return body.channels;
 }).map(function(channel) {
   return fetch('https://slack.com/api/channels.info?' + qs.stringify({
@@ -21,6 +23,9 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
       token: process.env.SLACK_TOKEN
     })).then(function(res) {
     return res.json();
+  }).tap(function(body) {
+    if (!body.ok)
+      throw new Error(body.error);
   });
 }).map(function(e) {
   return e.channel;
@@ -52,6 +57,9 @@ P.join(previous, current).spread(function(prev, cur) {
   idle.forEach(function(channel) {
     console.log(channel.id, channel.name, (now() - channel.latest.ts) / 86400 | 0);
   });
+}).catch(function(e) {
+  console.warn(e.stack);
+  process.exit(1);
 });
 
 function latest(ent) {
@@ -59,9 +67,9 @@ function latest(ent) {
 }
 
 function days(n) {
-    return n * 86400;
+  return n * 86400;
 }
 
 function now() {
-    return Date.now() / 1000;
+  return Date.now() / 1000;
 }
