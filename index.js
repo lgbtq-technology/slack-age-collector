@@ -18,10 +18,10 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
     throw new Error(body.error);
   return body.channels;
 }).map(function(channel) {
-  return fetch('https://slack.com/api/channels.info?' + qs.stringify({
+  return P.resolve(fetch('https://slack.com/api/channels.info?' + qs.stringify({
       channel: channel.id,
       token: process.env.SLACK_TOKEN
-    })).then(function(res) {
+    }))).then(function(res) {
     return res.json();
   }).tap(function(body) {
     if (!body.ok)
