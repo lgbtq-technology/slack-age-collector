@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var P = require('bluebird');
 var fetch = require('node-fetch');
 var fs = P.promisifyAll(require('fs'));
