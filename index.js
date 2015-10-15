@@ -3,6 +3,7 @@ var P = require('bluebird');
 var fetch = require('node-fetch');
 var fs = P.promisifyAll(require('fs'));
 var qs = require('qs');
+var debug = require('debuglog')('slack-age-collector');
 
 var previous = fs.readFileAsync('data.json', 'utf-8').then(JSON.parse).catch(function() {
   return {};
@@ -18,6 +19,7 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
     throw new Error(body.error);
   return body.channels;
 }).map(function(channel) {
+  debug("Getting channel info for %j", channel.name);
   return P.resolve(fetch('https://slack.com/api/channels.info?' + qs.stringify({
       channel: channel.id,
       token: process.env.SLACK_TOKEN
@@ -36,6 +38,7 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
 P.join(previous, current).spread(function(prev, cur) {
   Object.keys(cur).forEach(function(id) {
     if (!cur[id].latest) {
+      debug("Carrying timestamp for %j forward", cur[id].name);
       cur[id].latest = {
         ts: latest(prev[id])
       };
