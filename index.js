@@ -30,10 +30,34 @@ var current = P.resolve('https://slack.com/api/channels.list?' + qs.stringify({
       throw new Error(body.error);
   });
 }).map(function(e) {
-  return e.channel;
+  if (e.channel.latest) {
+    return e.channel;
+  } else {
+    return getLatestFor(e.channel);
+  }
 }).reduce(function(a, e) {
   a[e.id] = e; return a;
 }, {});
+
+function getLatestFor(channel) {
+  debug("Getting latest for %j", channel.name);
+  return fetch('https://slack.com/api/channels.history?' + qs.stringify({
+      channel: channel.id,
+      token: process.env.SLACK_TOKEN
+    })).then(function(res) {
+    return res.json();
+  }).then(function(history) {
+    if (!history.ok)
+      throw new Error(history.error);
+    if (history.messages[0]) {
+      debug("Got latest for %j: %j", channel.name, history.messages[0]);
+      channel.latest = history.messages[0];
+    } else {
+      debug("No messages in %j", channel.name);
+    }
+    return channel;
+  });
+}
 
 P.join(previous, current).spread(function(prev, cur) {
   Object.keys(cur).forEach(function(id) {
